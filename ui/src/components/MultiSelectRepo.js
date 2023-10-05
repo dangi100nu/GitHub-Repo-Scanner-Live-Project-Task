@@ -33,7 +33,7 @@ const MultiSelectRepo = () => {
                         </tr>
                         <tr>
                           <th scope="row">Size</th>
-                          <td colspan="2">{repo.size}</td>
+                          <td colspan="2">{repo.size}kb</td>
                         </tr>
                         <tr>
                           <th scope="row">Owner</th>

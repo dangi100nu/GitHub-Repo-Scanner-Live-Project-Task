@@ -24,10 +24,19 @@ function RepositoryList() {
   const [selectedRepositories, setSelectedRepositories] = useState([]);
 
   const handleCheckboxClick = (repo) => {
-    if (selectedRepositories.some((selectedRepo) => selectedRepo.id === repo.id)) {
-      setSelectedRepositories(selectedRepositories.filter((selectedRepo) => selectedRepo.id !== repo.id));
+    if (
+      selectedRepositories.some((selectedRepo) => selectedRepo.id === repo.id)
+    ) {
+      setSelectedRepositories(
+        selectedRepositories.filter(
+          (selectedRepo) => selectedRepo.id !== repo.id
+        )
+      );
     } else {
       setSelectedRepositories([...selectedRepositories, repo]);
+      if (selectedRepositories.length === 1) {
+        alert("You can select only one more checkbox.");
+      }
     }
   };
 
@@ -60,9 +69,8 @@ function RepositoryList() {
 
   return (
     <>
-
       <h4 className="text-center bg-primary p-3 text-white">
-       welcome to GitHub repository scanner system 
+        welcome to GitHub repository scanner system
       </h4>
       <div className="container-fluid mt-4 d-flex justify-content-center">
         <div className="card border-2 border-secondary col-lg-4 col-md-6 col-12">
@@ -111,7 +119,7 @@ function RepositoryList() {
                 className="btn btn-primary ms-2"
                 onClick={handleMultipeRepos}
               >
-                Click to proceed 
+                Click to proceed
               </button>
             )}
           </div>
@@ -139,10 +147,10 @@ function RepositoryList() {
                           )}
                           disabled={
                             selectedRepositories.length >= 2 &&
-                            !selectedRepositories.includes(repo.id)
+                            !selectedRepositories.some(
+                              (selectedRepo) => selectedRepo.id === repo.id
+                            )
                           }
-                          
-                          
                         />
                       )}
                     </td>
