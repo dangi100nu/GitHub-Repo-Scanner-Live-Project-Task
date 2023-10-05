@@ -1,4 +1,4 @@
-Given below is the assignment for Node JS. Please complete the assignment in 2 Days.
+Given below is the assignment for Node JS/React. 
 Please see the assignment details. You will need to implement a "GitHub scanner" system.
 
 General:
