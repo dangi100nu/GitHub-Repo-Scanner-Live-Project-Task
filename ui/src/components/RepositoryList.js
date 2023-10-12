@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLazyQuery, gql } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +11,7 @@ const GET_REPOSITORIES = gql`
       visibility
       forks_count
       language
+      branch
       owner {
         login
       }
@@ -21,6 +22,7 @@ function RepositoryList() {
   const navigate = useNavigate();
   const [developerToken, setDeveloperToken] = useState("");
   const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const [errors, setErrors] = useState(null);
   const [selectedRepositories, setSelectedRepositories] = useState([]);
 
   const handleCheckboxClick = (repo) => {
@@ -46,32 +48,61 @@ function RepositoryList() {
     }
   };
 
-  const [fetchRepositories, { loading, error, data }] =
-    useLazyQuery(GET_REPOSITORIES);
-
-  const handleTokenChange = (e) => {
-    setDeveloperToken(e.target.value);
-  };
-
   const handleDetailsButtonClick = (repo) => {
-    navigate("/repodetails", { state: { repo } });
+    navigate("/repodetails", { state: { repo,developerToken } });
   };
-  const handleSubmit = () => {
+  const [fetchRepositories, { loading, error, data, client }] = useLazyQuery(
+    GET_REPOSITORIES,
+    {
+      onCompleted: (data) => updateCache({ client, data }),
+    }
+  );
+
+  function updateCache({ client, data }) {
+    client.writeQuery({
+      query: GET_REPOSITORIES,
+      data: {
+        ...data.listRepositories,
+      },
+    });
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
     fetchRepositories({ variables: { developerToken } });
   };
-  if (loading)
-    return (
-      <div className="d-flex justify-content-center align-items-center fw-semibold fs-5 vh-100">
-        <p>please wait scanning repos...</p>
-      </div>
-    );
-  if (error) return <p>Error: {error.message}</p>;
+
+  useEffect(() => {
+    if (error) {
+      setErrors(error.message);
+    } else {
+      setErrors(null);
+    }
+  }, [error]);
 
   return (
     <>
       <h4 className="text-center bg-primary p-3 text-white">
         welcome to GitHub repository scanner system
       </h4>
+      {errors && (
+        <>
+          <div
+            class="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
+            <strong className="fs-5">{errors}</strong>
+
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+              onClick={() => setErrors(null)}
+            ></button>
+          </div>
+        </>
+      )}
       <div className="container-fluid mt-4 d-flex justify-content-center">
         <div className="card border-2 border-secondary col-lg-4 col-md-6 col-12">
           <div className="card-header">
@@ -79,26 +110,28 @@ function RepositoryList() {
               GitHub Repository Scanner
             </h4>
           </div>
-          <div className="card-body">
-            <div className="form-group mt-2">
-              <label htmlFor="developerToken" className="fw-semibold">
-                Access Token:
-              </label>
-              <input
-                type="text"
-                id="developerToken"
-                className="form-control mt-1 border border-2"
-                placeholder="Enter GitHub Token"
-                value={developerToken}
-                onChange={handleTokenChange}
-              />
+          <form onSubmit={handleSubmit}>
+            <div className="card-body">
+              <div className="form-group mt-2">
+                <label htmlFor="developerToken" className="fw-semibold">
+                  Access Token:
+                </label>
+                <input
+                  type="text"
+                  id="developerToken"
+                  className="form-control mt-1 border border-2"
+                  placeholder="Enter GitHub Token"
+                  value={developerToken}
+                  onChange={(e) => setDeveloperToken(e.target.value)}
+                />
+              </div>
+              <div className="text-center mt-4">
+                <button className="btn btn-primary">
+                  {loading ? "please wait scanning..." : "Fetch Repositories"}
+                </button>
+              </div>
             </div>
-            <div className="text-center mt-4">
-              <button className="btn btn-primary" onClick={handleSubmit}>
-                Fetch Repositories
-              </button>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
       {data && data.listRepositories.length > 0 && (
@@ -123,8 +156,8 @@ function RepositoryList() {
               </button>
             )}
           </div>
-          <div className="pt-4 table-responsive">
-            <table className="table align-middle ">
+          <div className="container my-5 table-responsive">
+            <table className="table table-bordered  align-middle ">
               <thead>
                 <tr>
                   <th></th>

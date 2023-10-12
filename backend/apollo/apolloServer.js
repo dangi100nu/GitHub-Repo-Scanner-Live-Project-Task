@@ -15,12 +15,17 @@ const server = new ApolloServer({
     visibility: String
     language : String
     forks_count: Int
+    branch: String
+  }
+
+  type Repositorydetail{
+    sha: String
   }
   
 
   type Query {
     listRepositories(developerToken: String): [Repository]
-    
+    RepositoriesDetails(developerToken: String owners: String repo: String branch: String): [Repositorydetail]
   }
 `,
   resolvers: {
@@ -45,6 +50,7 @@ const server = new ApolloServer({
             visibility: repo.visibility,
             forks_count: repo.forks_count,
             language: repo.language,
+            branch: repo.default_branch,
           }));
           console.log(repositories);
           return repositories;
@@ -53,7 +59,27 @@ const server = new ApolloServer({
           throw new Error("Failed to fetch repositories");
         }
       },
-     
+      RepositoriesDetails: async (_, {developerToken, owners, repo, branch }) => {
+        try {
+          const response = await axios.get(
+            `https://api.github.com/repos/${owners}/${repo}/git/trees/${branch}`,
+            {
+              headers: {
+                Authorization: `Bearer ${developerToken}`,
+              },
+            }
+          );
+          const RepositoriesDetail = response.data.tree.map((repo) => ({
+            sha: repo.path,
+            
+          }));
+          console.log(RepositoriesDetail);
+          return RepositoriesDetail;
+        } catch (error) {
+          console.error("Error fetching repositories:", error);
+          throw new Error("Failed to fetch repositories");
+        }
+      },
     },
   },
 });

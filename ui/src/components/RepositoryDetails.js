@@ -1,9 +1,36 @@
+import { gql, useQuery } from "@apollo/client";
 import React from "react";
 import { useLocation } from "react-router-dom";
 
 const RepositoryDetails = () => {
   const { state } = useLocation();
   const repository = state.repo;
+  const developerToken = state.developerToken;
+
+
+  const owners = repository.owner.login;
+  const repo = repository.name;
+  const branch = repository.branch;
+
+  const GET_File_Structure = gql`
+    query RepositoriesDetails(
+      $owners: String!
+      $repo: String!
+      $branch: String!
+      $developerToken: String!
+    ) {
+      RepositoriesDetails( developerToken: $developerToken owners: $owners, repo: $repo, branch: $branch) {
+        sha
+      }
+    }
+  `;
+  const { loading, error, data } = useQuery(GET_File_Structure, {
+    variables: { developerToken, owners, repo, branch },
+  });
+
+  if (loading) return null;
+  if (error) return `Error! ${error}`;
+
   return (
     <div className="bg-dark pb-4 vh-100">
       <h4 className="text-center bg-primary p-3 text-white">
@@ -44,6 +71,18 @@ const RepositoryDetails = () => {
                 <tr>
                   <th scope="row">Language</th>
                   <td colspan="2">{repository.language}</td>
+                </tr>
+                <tr>
+                  <th scope="row">File structure</th>
+                  <td colspan="2">
+                    <select  >
+                      {data.RepositoriesDetails.map((ele) => (
+                        <option key={ele.id} value={ele.sha}>
+                          {ele.sha}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                 </tr>
               </tbody>
             </table>
